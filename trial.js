@@ -1,5 +1,5 @@
-
-
+mongoimport --db=test --collection=friends --file=friends.json --jsonArray
+> use <DB name>
 
 > db.product.insertMany([{name:"many",price:12,company:"e-ERP-TN"},{name:"other many",price:12,company:"e-ERP-TN"}])
 > db.company.insertMany([{name:"e-ERP-TN",location:"TN",registredAt:new Date()},{name:"siemens",location:"GE",rehisteredAt:new Date()}])
