@@ -11,6 +11,8 @@ mongoimport --db=test --collection=friends --file=friends.json --jsonArray
 	db.tvShows.find({genres:{$all: ["Drama","Horror"] } }).pretty()
 // in array operator
 	db.tvShows.find({runtime:{$in:[30,42]}}).pretty()
+	// task management
+	db.projects.find({_id:ObjectId("xxx"),"tasks.status":{$in{["on progress","in review"]}}})
 // logic operation on array of operations
 	db.tvShows.find({$or:[{"rating.average":{$lt:5}},{"rating.average":{$gt:9}}]}).pretty()
 	db.tvShows.find({$and:[{"rating.average":{$lt:7}},{"genres":"Drama"}]}).count()
@@ -57,10 +59,25 @@ mongoimport --db=test --collection=friends --file=friends.json --jsonArray
 	db.acamindUser.updateOne({name:"Anna"},{$pull:{hobbies:{frequency:{$gte:10}}}})
 
 
+// Exercice
 
+let data = { title:"proj1",company:["vital","plomb"],tasks:[{subject:"t1"},{subject:"t2",subject:"t3"}] }
+let data2 = { title:"proj2",company:["cart","form"],tasks:[{subject:"s1"},{subject:"s2",subject:"s3"}] }
+db.trial.insertMany([data,data2])
+db.update({_id:ObjectId("619d0804d4244813d2be4c77"),"tasks":{$elemMatch:{subject:"t1"}}},{$set:{"tasks.$.progress":22}})
+db.trial.find({company:"cart"}})
+db.trial.update({company:"cart"},{$addToSet:{company:"new comp"}})
 
+// return only tasks
+ db.project_collections.aggregate([{$match:{title:"00TestTag"}},{$project:{tasks:1}},{$project:{"tasks.history":0}}]).pretty()
 
-
+ db.project_collections.aggregate([
+	{$match:{title:"00TestTag"}},
+	{$project:{tasks:1}},
+	{$project:{"tasks.history":0}},
+	{$addFields:{"tasks.fetchedDate":new Date()}},
+	{$project:{tasks:{$filter:{input:"$tasks",as:"task",cond:{$in:["$$task.status"["completed", "in progress"]]}}}}}
+]).pretty()
 
 
 
