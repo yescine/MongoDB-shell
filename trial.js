@@ -73,11 +73,51 @@ db.trial.update({company:"cart"},{$addToSet:{company:"new comp"}})
 
  db.project_collections.aggregate([
 	{$match:{title:"00TestTag"}},
-	{$project:{tasks:1}},
+	{$project:{tasks:1,_id:0}},
 	{$project:{"tasks.history":0}},
 	{$addFields:{"tasks.fetchedDate":new Date()}},
-	{$project:{tasks:{$filter:{input:"$tasks",as:"task",cond:{$in:["$$task.status"["completed", "in progress"]]}}}}}
+	{$project:{tasks:{$filter:{input:"$tasks",as:"task",cond:{$in:["$$task.status",["completed", "in progress"]]}}}}},
+	{$unwind:"$tasks"},
+	{$replaceWith: "$tasks" }
 ]).pretty()
 
+// explanation
+ db.project_collections.aggregate([
+	// search project 
+	{$match:{title:"00TestTag"}},
+	// select tasks fields
+	{$project:{tasks:1,_id:0}},
+	// remove history from every task in the array
+	{$project:{"tasks.history":0}},
+	// add optional field in every task
+	{$addFields:{"tasks.fetchedDate":new Date()}},
+	// filtser tasks with some field
+	{$project:{tasks:{$filter:{input:"$tasks",as:"task",cond:{$in:["$$task.status",["completed", "in progress"]]}}}}},
+	// regroup for output result
+	{$unwind:"$tasks"},
+	{$replaceWith: "$tasks" }
+]).pretty()
+
+// better result
+ db.project_collections.aggregate([
+	{$match:{title:"00TestTag"}},
+	{$project:{tasks:1,_id:0}},
+	{$unwind:"$tasks"},
+	{$replaceWith: "$tasks" },
+	{$project:{history:0}},
+	{$addFields:{"fetchedDate":new Date(),"summary":{$concat:["$$ROOT.subject","||","$$ROOT.notes"]} }},
+	{$match:{$or:[{"status":"completed"},{status:"assigned"}]}}
+]).pretty()
+
+// DB statistic
+// calculate number of project and tasks
 
 
+ db.project_collections.aggregate([
+	{$project:{tasksCount:{$sum:"$tasks"} }},
+	{$group:{
+		_id:null,
+		projectCount:{ $sum:1},
+		tasksCount:{$sum:"$tasksCount"}
+	}}
+]).pretty()
